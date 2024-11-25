@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "ocr-leaflet"
+version = "0.1.0"
+description = ""
+authors = ["standbyme227 <standbyme227@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+label-studio = "^1.14.0.post0"
+paddleocr = "^2.9.1"
+flask = "^3.1.0"
+paddlepaddle = "^2.6.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

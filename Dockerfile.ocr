@@ -1,0 +1,31 @@
+# Python 3.11 기반 이미지 사용
+FROM python:3.11-slim
+
+# 필수 패키지 설치 (gcc, OpenGL, glib 포함)
+RUN apt-get update && apt-get install -y \
+    gcc \
+    build-essential \
+    patch \
+    libgl1 \
+    libglib2.0-0 \
+    wget \
+    && apt-get clean
+
+# Poetry 설치
+RUN pip install --no-cache-dir poetry paddlepaddle paddleocr
+
+# PaddleOCR 모델 캐싱
+RUN python -c "from paddleocr import PaddleOCR; PaddleOCR(use_angle_cls=True, lang='en')"
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# Poetry 환경 구성
+COPY pyproject.toml poetry.lock ./ 
+RUN poetry config virtualenvs.create false && poetry install --no-dev --no-interaction --no-ansi
+
+# OCR 서버 코드 복사
+COPY ocr_server.py .
+
+# OCR 서버 실행
+CMD ["poetry", "run", "python", "ocr_server.py"]
