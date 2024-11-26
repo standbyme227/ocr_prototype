@@ -1,0 +1,23 @@
+# Frontend Dockerfile
+FROM python:3.11-slim
+
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgl1-mesa-glx \
+    && apt-get clean
+
+# Install Streamlit for Frontend UI
+RUN pip install --no-cache-dir streamlit
+
+# Set working directory
+WORKDIR /app
+
+# Copy frontend source code
+COPY frontend/ .
+
+# Expose the Streamlit default port
+EXPOSE 8501
+
+# Run the Streamlit app
+CMD ["streamlit", "run", "frontend_app.py", "--server.port=8501", "--server.enableCORS=false", "--server.address=0.0.0.0"]

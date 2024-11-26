@@ -1,9 +1,8 @@
 import os
-from ocr_processors.image_preprocessor import preprocess_image
-from ocr_processors.ocr_processor import process_ocr
+from .image_preprocessor import preprocess_image
 
 
-def process_folder(input_folder):
+def batch_processor(input_folder):
     """
     지정된 폴더의 이미지를 전처리하고 OCR 수행.
     결과 파일은 'results' 폴더에 저장.
@@ -49,24 +48,11 @@ def process_folder(input_folder):
         if filename is None:
             print(f"Error during preprocessing {filename}")
             continue
-
-        # # 전처리된 이미지 경로
-        # processed_image_path = os.path.join(output_folder, filename)
-        
-        # processed_image_path = file_path
-
-        # # OCR 처리
-        # try:
-        #     print(f"Performing OCR on: {processed_image_path}")
-        #     ocr_results = process_ocr(image_path=processed_image_path, group=True, language="sk")
-        #     print(f"OCR Results for {filename}:")
-        #     print(ocr_results)
-        # except Exception as e:
-        #     print(f"Error during OCR for {filename}: {e}")
         count += 1
         
     if count > 0:
         print(f"Processed {count} images of total {len(dir_list)} in folder.")
+        return output_folder
     else:
         raise ValueError(f"No images found in folder: {input_folder}")
 

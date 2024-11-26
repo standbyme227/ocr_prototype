@@ -21,12 +21,12 @@ RUN python -c "from paddleocr import PaddleOCR; PaddleOCR(use_angle_cls=True, la
 WORKDIR /app
 
 # Poetry 환경 구성
-COPY pyproject.toml poetry.lock ./ 
+COPY /ocr_server/pyproject.toml /ocr_server/poetry.lock ./ 
 RUN poetry config virtualenvs.create false && poetry install --no-dev --no-interaction --no-ansi
 
 # OCR 서버 코드 복사
-COPY /ocr_processors ./ocr_processors
-COPY ocr_server.py .
+COPY /ocr_server/ocr_processors ./ocr_processors
+COPY /ocr_server/ocr_server.py .
 
 
 # OCR 서버 실행

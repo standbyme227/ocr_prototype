@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "8501:8501" # Streamlit 기본 포트
+
+  preprocessor:
+    build:
+      context: ./preprocessor
+    container_name: preprocessor
+    ports:
+      - "5001:5001"
+
+  ocr_server:
+    build:
+      context: ./ocr_server
+    container_name: ocr_server
+    ports:
+      - "5002:5002"
