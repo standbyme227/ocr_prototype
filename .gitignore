@@ -225,3 +225,5 @@ pyrightconfig.json
 
 data/*
 !data/.gitkeep
+
+results

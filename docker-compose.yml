@@ -24,6 +24,7 @@ services:
       - ./data:/app/data # 데이터 공유 (원본, 라벨링, 처리된 데이터)
     environment:
       - OCR_PORT=8082
+      - PYTHONPATH=/app
 
   ml-backend:
     build:
