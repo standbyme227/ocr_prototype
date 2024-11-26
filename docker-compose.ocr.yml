@@ -2,21 +2,24 @@ version: "3.8"
 services:
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: Dockerfile.frontend
     container_name: frontend
     ports:
       - "8501:8501" # Streamlit 기본 포트
 
   preprocessor:
     build:
-      context: ./preprocessor
+      context: .
+      dockerfile: Dockerfile.preprocessor
     container_name: preprocessor
     ports:
       - "5001:5001"
 
   ocr_server:
     build:
-      context: ./ocr_server
+      context: .
+      dockerfile: Dockerfile.ocr
     container_name: ocr_server
     ports:
       - "5002:5002"

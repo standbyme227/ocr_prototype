@@ -1,5 +1,5 @@
 import os
-from .image_preprocessor import preprocess_image
+from image_preprocessor import preprocess_image
 
 
 def batch_processor(input_folder):

@@ -21,4 +21,4 @@ COPY preprocessor/ .
 EXPOSE 5000
 
 # Run the preprocessor script
-CMD ["python", "preprocessor_app.py"]
+CMD ["python", "app.py"]

@@ -1,0 +1,4 @@
+# Preprocessor dependencies
+flask
+opencv-python-headless
+numpy
