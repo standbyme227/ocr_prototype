@@ -227,3 +227,6 @@ data/*
 !data/.gitkeep
 
 results
+
+volumes/*
+!volumes/.gitkeep

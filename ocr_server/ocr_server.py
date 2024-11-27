@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from flask import Flask, request, jsonify
@@ -51,7 +52,12 @@ def process_image_request():
                 return jsonify({"error": "Provided image path is invalid"}), 400
 
             ocr_result = process_ocr(image_path=image_path, language=language, group=group)
-            return jsonify({"data": ocr_result}), 200
+            return jsonify(
+                    {
+                        "data": ocr_result,
+                        "output_folder": os.path.dirname(image_path)
+                    },
+                ), 200
 
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400

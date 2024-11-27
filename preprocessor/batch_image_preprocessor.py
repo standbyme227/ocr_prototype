@@ -10,22 +10,26 @@ def batch_processor(input_folder):
     # 입력 폴더 검증
     if not os.path.exists(input_folder):
         raise ValueError(f"Input folder '{input_folder}' does not exist.")
+    
+    base_output_folder = "/volumes/preprocessed"   # 출력 경로
 
-    # 실행 파일과 같은 계층에 'results' 폴더 생성
-    base_output_folder = os.path.join(os.getcwd(), "results")
-    if not os.path.exists(base_output_folder):
-        os.makedirs(base_output_folder)
-        print(f"Created results folder at {base_output_folder}")
+    # 입력 폴더에서 하위 폴더 이름 추출
+    folder_name = os.path.basename(input_folder)
 
-    # 현재 input_folder 이름에 따라 별도 폴더 생성
-    folder_name = os.path.basename(os.path.normpath(input_folder))
+    # 출력 폴더 생성
     output_folder = os.path.join(base_output_folder, folder_name)
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    os.makedirs(output_folder, exist_ok=True)
+
+    # # 현재 input_folder 이름에 따라 별도 폴더 생성
+    # folder_name = os.path.basename(os.path.normpath(input_folder))
+    # output_folder = os.path.join(base_output_folder, folder_name)
+    # if not os.path.exists(output_folder):
+    #     os.makedirs(output_folder)
         
     dir_list = os.listdir(input_folder)
     
     count = 0
+    errors = []
 
     # 폴더의 이미지 파일 처리
     for filename in dir_list:
@@ -34,19 +38,25 @@ def batch_processor(input_folder):
         # 이미지 파일 검증
         if not (filename.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff"))):
             print(f"Skipping non-image file: {filename}")
+            errors.append(f"Skipping non-image file: {filename}")
             continue
 
         # 전처리
         try:
             print(f"Preprocessing image: {file_path}")
-            filename = preprocess_image(file_path, output_folder)
+            new_filename = preprocess_image(file_path, output_folder)
+            
+            if new_filename is None:
+                raise ValueError(f"Error during preprocessing {new_filename}")
             
         except Exception as e:
             print(f"Error during preprocessing {filename}: {e}")
+            errors.append(e)
             continue
         
-        if filename is None:
+        if new_filename is None:
             print(f"Error during preprocessing {filename}")
+            errors.append(f"Error during preprocessing {filename}")
             continue
         count += 1
         
@@ -54,7 +64,7 @@ def batch_processor(input_folder):
         print(f"Processed {count} images of total {len(dir_list)} in folder.")
         return output_folder
     else:
-        raise ValueError(f"No images found in folder: {input_folder}")
+        raise ValueError(f"No images found in folder: {input_folder}, {errors}")
 
 
 if __name__ == "__main__":

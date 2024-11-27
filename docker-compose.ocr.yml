@@ -7,6 +7,11 @@ services:
     container_name: frontend
     ports:
       - "8501:8501" # Streamlit 기본 포트
+    volumes:
+      - ./volumes/original:/volumes/original
+      - ./volumes/preprocessed:/volumes/preprocessed
+      - ./volumes/ocr_results:/volumes/ocr_results
+      - ./frontend:/app/frontend # 로컬 ./frontend 디렉토리를 컨테이너 /app/frontend로 마운트
 
   preprocessor:
     build:
@@ -15,6 +20,10 @@ services:
     container_name: preprocessor
     ports:
       - "5001:5001"
+    volumes:
+      - ./volumes/original:/volumes/original
+      - ./volumes/preprocessed:/volumes/preprocessed
+      - ./preprocessor:/app/preprocessor # 로컬 ./preprocessor 디렉토리를 컨테이너 /app/preprocessor로 마운트
 
   ocr_server:
     build:
@@ -22,4 +31,8 @@ services:
       dockerfile: Dockerfile.ocr
     container_name: ocr_server
     ports:
-      - "5002:5002"
+      - "8082:8082"
+    volumes:
+      - ./volumes/preprocessed:/volumes/preprocessed
+      - ./volumes/ocr_results:/volumes/ocr_results
+      - ./ocr_server:/app/ocr_server # 로컬 ./ocr_server 디렉토리를 컨테이너 /app/ocr_server로 마운트
