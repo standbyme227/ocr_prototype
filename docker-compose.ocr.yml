@@ -25,6 +25,10 @@ services:
       - ./volumes/preprocessed:/volumes/preprocessed
       - ./preprocessor:/app/preprocessor # 로컬 ./preprocessor 디렉토리를 컨테이너 /app/preprocessor로 마운트
 
+    tty: true
+    stdin_open: true
+    mem_limit: 7g
+
   ocr_server:
     build:
       context: .

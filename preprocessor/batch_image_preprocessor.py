@@ -1,6 +1,8 @@
 import os
 from image_preprocessor import preprocess_image
+import cv2
 
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "ESPCN_x2.pb")
 
 def batch_processor(input_folder):
     """
@@ -31,6 +33,15 @@ def batch_processor(input_folder):
     count = 0
     errors = []
 
+    # 모델 경로 확인
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model file not found at path: {MODEL_PATH}")
+    
+    # OpenCV DNN 모델 초기화
+    sr = cv2.dnn_superres.DnnSuperResImpl_create()
+    sr.setModel("espcn", 2)
+    sr.readModel(MODEL_PATH)
+
     # 폴더의 이미지 파일 처리
     for filename in dir_list:
         file_path = os.path.join(input_folder, filename)
@@ -44,20 +55,16 @@ def batch_processor(input_folder):
         # 전처리
         try:
             print(f"Preprocessing image: {file_path}")
-            new_filename = preprocess_image(file_path, output_folder)
+            new_filename = preprocess_image(file_path, output_folder, upscale_model=sr)
+            raw_filename = filename.split(".")[0]
             
-            if new_filename is None:
+            if new_filename is None or (raw_filename not in new_filename):
                 raise ValueError(f"Error during preprocessing {new_filename}")
             
         except Exception as e:
-            print(f"Error during preprocessing {filename}: {e}")
             errors.append(e)
             continue
         
-        if new_filename is None:
-            print(f"Error during preprocessing {filename}")
-            errors.append(f"Error during preprocessing {filename}")
-            continue
         count += 1
         
     if count > 0:

@@ -89,26 +89,31 @@ def enhance_gray_to_white(image):
 
     return result_image
 
-
 # 전처리 함수
-def preprocess_image(image_path, output_dir):
+def preprocess_image(image_path, output_dir, upscale_model=None):
     try:
         # 이미지 읽기 (흑백으로 로드)
         # image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        
+        # 이미지 읽기
         image = cv2.imread(image_path)
         image_name = image_path.split("/")[-1]
-
-        if image is None:
-            print(f"Error: Could not load image from path {image_path}")
-            return
-
-        # Step 1: 해상도 업스케일링
-        result_image = cv2.resize(image, None, fx=4, fy=4, interpolation=cv2.INTER_LANCZOS4)
         
-        result_image = enhance_gray_to_white(result_image)
-        result_image = cv2.cvtColor(result_image, cv2.COLOR_BGR2GRAY)
+        if image is None:
+            raise ValueError(f"Failed to load image from {image_path}")
+
+        if upscale_model is not None:
+            # 업스케일링
+            result_image = upscale_model.upsample(image)
+
+        # # Step 1: 해상도 업스케일링
+        # result_image = cv2.resize(image, None, fx=4, fy=4, interpolation=cv2.INTER_LANCZOS4)
+        
+        # result_image = enhance_gray_to_white(result_image)
+        # result_image = cv2.cvtColor(result_image, cv2.COLOR_BGR2GRAY)
+        
         # Step 2-2: 이진화
-        _, result_image = cv2.threshold(result_image, 170, 255, cv2.THRESH_BINARY)
+        # _, result_image = cv2.threshold(result_image, 170, 255, cv2.THRESH_BINARY)
         
         # # Step 2-1: 잡음 제거 (선택 사항)
         # blurred_image = cv2.GaussianBlur(resized_image, (3, 3), 0)
@@ -120,13 +125,11 @@ def preprocess_image(image_path, output_dir):
         # result_image, _ = cv2.findContours(result_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # result_image = cv2.drawContours(image, result_image, -1, (255, 255, 0), 2)  # 노란색 컨투어
 
-
-
         # # Step 3: 어댑티브 이진화 (선택 사항, 기존 이진화 대체 가능)
         # result_image = cv2.adaptiveThreshold(
         #     result_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 13, 0.3
         # )
-    
+
         # # Step 4: 엣지 강조 (선택 사항)
         # edges = cv2.Canny(binary_image, 100, 200)
 
@@ -152,4 +155,4 @@ def preprocess_image(image_path, output_dir):
         return new_image_name
     
     except Exception as e:
-        return e
+        raise e
