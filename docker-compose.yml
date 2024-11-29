@@ -10,6 +10,8 @@ services:
     environment:
       - LABEL_STUDIO_PORT=8080 # 기본 포트 유지
       - LABEL_STUDIO_ALLOW_SERVING_LOCAL_FILES=true
+    networks:
+      - ocr_network
 
   ocr-server:
     build:
@@ -19,12 +21,12 @@ services:
     ports:
       - "8082:8082" # OCR 서버
     volumes:
-      # - ./data/input_images:/app/data/input_images # 원본 이미지
-      # - ./data/processed_data:/app/data/processed_data # 처리된 데이터
       - ./data:/app/data # 데이터 공유 (원본, 라벨링, 처리된 데이터)
     environment:
       - OCR_PORT=8082
       - PYTHONPATH=/app
+    networks:
+      - ocr_network
 
   ml-backend:
     build:
@@ -36,6 +38,16 @@ services:
     depends_on:
       - ocr-server # OCR 서버가 먼저 실행되어야 함
     volumes:
+      - .ml_backend:/app/ml_backend # ML Backend 코드
       - ./data:/app/data # 데이터 공유 (원본, 라벨링, 처리된 데이터)
+      - ./volumes/models:/volumes/models
+      - ./volumes/train_data:/volumes/train_data
     environment:
       - OCR_SERVER_URL=http://ocr-server:8082
+    networks:
+      - ocr_network
+
+networks:
+  ocr_network:
+    driver: bridge
+    name: ocr_network

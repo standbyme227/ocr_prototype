@@ -1,8 +1,5 @@
 import os
 from image_preprocessor import preprocess_image
-import cv2
-
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "ESPCN_x2.pb")
 
 def batch_processor(input_folder):
     """
@@ -21,29 +18,14 @@ def batch_processor(input_folder):
     # 출력 폴더 생성
     output_folder = os.path.join(base_output_folder, folder_name)
     os.makedirs(output_folder, exist_ok=True)
-
-    # # 현재 input_folder 이름에 따라 별도 폴더 생성
-    # folder_name = os.path.basename(os.path.normpath(input_folder))
-    # output_folder = os.path.join(base_output_folder, folder_name)
-    # if not os.path.exists(output_folder):
-    #     os.makedirs(output_folder)
         
     dir_list = os.listdir(input_folder)
     
     count = 0
     errors = []
 
-    # 모델 경로 확인
-    if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError(f"Model file not found at path: {MODEL_PATH}")
-    
-    # OpenCV DNN 모델 초기화
-    sr = cv2.dnn_superres.DnnSuperResImpl_create()
-    sr.setModel("espcn", 2)
-    sr.readModel(MODEL_PATH)
-
     # 폴더의 이미지 파일 처리
-    for filename in dir_list:
+    for filename in dir_list[:2]:
         file_path = os.path.join(input_folder, filename)
 
         # 이미지 파일 검증
@@ -55,7 +37,7 @@ def batch_processor(input_folder):
         # 전처리
         try:
             print(f"Preprocessing image: {file_path}")
-            new_filename = preprocess_image(file_path, output_folder, upscale_model=sr)
+            new_filename = preprocess_image(file_path, output_folder)
             raw_filename = filename.split(".")[0]
             
             if new_filename is None or (raw_filename not in new_filename):
