@@ -181,7 +181,8 @@ class YOLOBackend(LabelStudioMLBase):
                 
                 score = float(result.boxes.conf[i])  # 신뢰도 점수
                 
-                if score < 0.985:
+                # if score < 0.985:
+                if score < 0.8:
                     continue
 
                 task_predictions.append({
@@ -212,6 +213,20 @@ class YOLOBackend(LabelStudioMLBase):
             return sum(all_scores) / len(all_scores)
         else:
             return 0.0
+        
+    def update_with_latest_data(self, existing_data, new_data):
+        """
+        기존 데이터에 새로운 데이터를 병합하면서 중복된 키는 최신 값으로 덮어씌운다.
+        Args:
+            existing_data (dict): 기존 데이터
+            new_data (dict): 새롭게 추가할 데이터
+        Returns:
+            dict: 최신 데이터만 남은 병합된 데이터
+        """
+        for key, value in new_data.items():
+            existing_data[key] = value  # 동일한 키가 있으면 최신 데이터로 덮어씌움
+        return existing_data
+
 
     def fit(self, tasks, workdir=None, **kwargs):
         """
@@ -226,9 +241,9 @@ class YOLOBackend(LabelStudioMLBase):
 
             project_name = project_name.lower().replace(" ", "_")
             project_id = kwargs.get('project_id')
-            
+
             annotations = tasks.get("annotation", {})
-            annotation_id = annotations.get("id")
+            annotation_id = str(annotations.get("id"))
 
             if not annotation_id:
                 logging.error("Annotation ID is missing in the data.")
@@ -245,19 +260,24 @@ class YOLOBackend(LabelStudioMLBase):
                 else:
                     existing_data = {}
 
-                # Annotation ID로 데이터 업데이트 또는 추가
-                existing_data[annotation_id] = {
-                    "task_id": tasks.get("task", {}).get("id"),
-                    "image_path": tasks.get("task", {}).get("data", {}).get("image"),
-                    "annotations": annotations.get("result", [])
+                # 새로운 데이터 생성
+                new_data = {
+                    annotation_id: {
+                        "task_id": tasks.get("task", {}).get("id"),
+                        "image_path": tasks.get("task", {}).get("data", {}).get("image"),
+                        "annotations": annotations.get("result", [])
+                    }
                 }
+
+                # 최신 데이터로 병합
+                updated_data = self.update_with_latest_data(existing_data, new_data)
 
                 # 데이터 저장
                 with open(train_data_path, "w") as f:
-                    json.dump(existing_data, f, indent=4)
+                    json.dump(updated_data, f, indent=4)
 
             return {"status": "Training data saved successfully!", "file_path": train_data_path}
-        
+
         except Exception as e:
             logging.error(f"Error saving training data: {str(e)}")
             return {"error": str(e)}

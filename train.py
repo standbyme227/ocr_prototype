@@ -4,16 +4,43 @@ import yaml
 from ultralytics import YOLO
 import shutil
 
-# 학습 데이터 이름
-TRAIN_DATA_NAME = "project_3_train_data"
+# env 파일 로드
+from dotenv import load_dotenv
+load_dotenv()
+
+# 환경 변수 설정
+TRAIN_DATA_NAME = os.getenv("TRAIN_DATA_NAME")
 file_extension = ".json"
 
 # 경로 설정
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))  # 현재 디렉토리
+RESULT_PROJECT_DIR = os.path.join(PROJECT_DIR, 'results')  # 결과 저장 디렉토리
 TRAIN_DATA_PATH = os.path.join(PROJECT_DIR, 'volumes', 'train_data', TRAIN_DATA_NAME + file_extension)  # 학습 데이터 경로
 COMPLETED_DATA_DIR = os.path.join(PROJECT_DIR, 'volumes', 'completed_data')  # 학습 완료된 데이터 저장 폴더
-MODEL_PATH = os.path.join(PROJECT_DIR, 'volumes', 'models', 'best.pt')
 # MODEL_PATH = os.path.join(PROJECT_DIR, 'volumes', 'models', 'yolo11m.pt')
+
+model_dict = {
+    "kaufland" : "kaufland_model.pt",
+    "tesco" : "tesco_model.pt",
+    "lidl" : "lidl_model.pt",
+    "billa" : "billa_model.pt",
+}
+
+# 학습데이터 이름을 확인해서 모델을 선택한다.
+def select_model(train_data_name):
+    if "kaufland" in train_data_name:
+        return model_dict["kaufland"]
+    elif "tesco" in train_data_name:
+        return model_dict["tesco"]
+    elif "lidl" in train_data_name:
+        return model_dict["lidl"]
+    elif "billa" in train_data_name:
+        return model_dict["billa"]
+    else:
+        return "yolo11m.pt"
+
+model_name = select_model(TRAIN_DATA_NAME)
+MODEL_PATH = os.path.join(PROJECT_DIR, 'volumes', 'models', model_name)
 
 # YOLO 모델 초기화
 if not os.path.exists(MODEL_PATH):
@@ -31,6 +58,18 @@ def prepare_yolo_dataset(train_data_path):
     with open(train_data_path, 'r') as f:
         labeled_data = json.load(f)
 
+    # 클래스 이름 추출
+    class_names_set = set()
+    for task_id, item in labeled_data.items():
+        annotations = item['annotations']
+        for annotation in annotations:
+            label = annotation['value'].get('rectanglelabels', [])[0]
+            class_names_set.add(label)
+
+    # 클래스 이름을 리스트로 변환하고 정렬 (일관된 클래스 ID를 위해)
+    class_names = sorted(list(class_names_set))
+    class_name_to_id = {name: idx for idx, name in enumerate(class_names)}
+
     # YOLO 형식 데이터 준비
     image_dir = os.path.join(PROJECT_DIR, 'volumes', 'train_data', TRAIN_DATA_NAME, 'images')
     label_dir = os.path.join(PROJECT_DIR, 'volumes', 'train_data', TRAIN_DATA_NAME, 'labels')
@@ -40,6 +79,11 @@ def prepare_yolo_dataset(train_data_path):
     task_id_list = labeled_data.keys()
     for task_id in task_id_list:
         item = labeled_data[task_id]
+        annotations = item['annotations']
+        if not annotations:
+            print(f"Skipping image with no annotations: {item['image_path']}")
+            continue  # 어노테이션이 없는 이미지는 데이터셋에서 제외
+        
         image_path = item['image_path']
         
         # 경로 수정 로직: '/data/' -> '/data/media/'
@@ -66,14 +110,15 @@ def prepare_yolo_dataset(train_data_path):
             for annotation in annotations:
                 value = annotation['value']
 
+                # 클래스 이름 및 ID 가져오기
+                label = value.get('rectanglelabels', [])[0]
+                class_id = class_name_to_id[label]
+
                 # YOLO 형식으로 좌표 변환
                 x_center = (value['x'] + value['width'] / 2) / 100.0  # %를 비율로 변환
                 y_center = (value['y'] + value['height'] / 2) / 100.0
                 width = value['width'] / 100.0
                 height = value['height'] / 100.0
-
-                # 클래스 ID 설정 (여기선 기본값 가정)
-                class_id = 0  # "item_information"이 단일 클래스인 경우
 
                 # YOLO 형식으로 저장
                 f.write(f"{class_id} {x_center} {y_center} {width} {height}\n")
@@ -84,39 +129,32 @@ def prepare_yolo_dataset(train_data_path):
         "path": os.path.join(PROJECT_DIR, 'volumes', 'train_data', TRAIN_DATA_NAME),
         "train": "images",
         "val": "images",  # 검증 데이터가 같은 폴더에 있다고 가정
-        "names": ["item_information"]  # 클래스 이름
+        "nc": len(class_names),  # 클래스 수
+        "names": class_names  # 클래스 이름 리스트
     }
     with open(dataset_yaml_path, 'w') as yaml_file:
         yaml.dump(dataset, yaml_file)
 
     return dataset_yaml_path
 
-# def train_model(train_data_path):
-#     """
-#     yolo11m 모델 학습 수행 및 학습 완료 처리
-#     """
-#     # 데이터셋 준비
-#     dataset = prepare_yolo_dataset(train_data_path)
-#     print("Dataset prepared.")
-    
-#     # 학습 수행
-#     # model.train(data=dataset, epochs=10, imgsz=640)
-    
-#     # 유사도가 높은 이미지를 학습한다면 freeze를 늘린다.
-#     model.train(data=dataset, epochs=10, imgsz=640, freeze=10)
-#     print("Model training completed!")
-    
-#     # 학습 완료 후 데이터 처리
-#     mark_data_as_completed(train_data_path)
-
 def train_model(train_data_path):
     """
     YOLO 모델 학습 수행 및 학습 완료 처리
     """
+    from ultralytics import YOLO
+    import yaml
+
     # 데이터셋 준비
     dataset = prepare_yolo_dataset(train_data_path)
     print("Dataset prepared.")
-    
+
+    # 데이터셋 YAML 파일에서 클래스 정보 읽기
+    with open(dataset, 'r') as f:
+        data_yaml = yaml.safe_load(f)
+        
+    class_names = data_yaml['names']
+    num_classes = data_yaml['nc']
+
     # MPS 장치 확인
     import torch
     if torch.backends.mps.is_available():
@@ -125,23 +163,27 @@ def train_model(train_data_path):
     else:
         device = 'cpu'
         print("MPS not available, using CPU.")
-    
+
+    # YOLO 모델 초기화 (클래스 수 설정)
+    model.model.nc = num_classes  # 클래스 수 설정
+    model.model.names = class_names  # 클래스 이름 설정
+
     # 학습 수행
     model.train(
         data=dataset,
-        epochs=50,
-        imgsz=640,
-        batch=16,
-        workers=4,
-        device=device,
-        freeze=0,
-        lr0=0.001,
-        optimizer='Adam',
-        cos_lr=True,
-        patience=5
+        epochs=10,
+        imgsz=640,      # 이미지 크기 감소
+        batch=4,        # 배치 크기 감소
+        workers=4,      # 워커 수 조정
+        device=device,  # 장치 설정 (필요 시 'cpu'로 변경)
+        freeze=10,       # 모든 레이어를 학습하도록 설정
+        # optimizer='Adam',
+        # cos_lr=True,
+        project=RESULT_PROJECT_DIR,
+        name=TRAIN_DATA_NAME,
     )
     print("Model training completed!")
-    
+
     # 학습 완료 후 데이터 처리
     mark_data_as_completed(train_data_path)
 
