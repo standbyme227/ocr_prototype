@@ -171,14 +171,20 @@ def train_model(train_data_path):
     # 학습 수행
     model.train(
         data=dataset,
+        device=device,  # 장치 설정 (필요 시 'cpu'로 변경)
+        
+        freeze=7,
+        
         epochs=10,
+        # patience=3,
         imgsz=640,      # 이미지 크기 감소
+        
         batch=4,        # 배치 크기 감소
         workers=4,      # 워커 수 조정
-        device=device,  # 장치 설정 (필요 시 'cpu'로 변경)
-        freeze=10,       # 모든 레이어를 학습하도록 설정
+
         # optimizer='Adam',
-        # cos_lr=True,
+        cos_lr=True,
+        
         project=RESULT_PROJECT_DIR,
         name=TRAIN_DATA_NAME,
     )
@@ -193,15 +199,16 @@ def mark_data_as_completed(data_path):
     Args:
         data_path (str): 학습 데이터 파일 경로
     """
-    # 학습 완료된 데이터 디렉토리 생성
-    os.makedirs(COMPLETED_DATA_DIR, exist_ok=True)
+    # 학습 완료 데이터 디렉토리 확인 및 생성
+    if not os.path.exists(COMPLETED_DATA_DIR):
+        os.makedirs(COMPLETED_DATA_DIR, exist_ok=True)
 
-    # 파일 이름에 "_completed" 추가
+    # 학습 완료 데이터 처리
     base_name = os.path.basename(data_path)
-    completed_name = base_name.replace('.json', '_completed.json')
     completed_dir_path = os.path.join(COMPLETED_DATA_DIR, TRAIN_DATA_NAME)
-    completed_path = os.path.join(COMPLETED_DATA_DIR, TRAIN_DATA_NAME, completed_name)
     os.makedirs(completed_dir_path, exist_ok=True)
+    
+    completed_path = os.path.join(COMPLETED_DATA_DIR, TRAIN_DATA_NAME, base_name)
 
     # 데이터 파일 이동
     shutil.move(data_path, completed_path)

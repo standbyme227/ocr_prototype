@@ -181,8 +181,8 @@ class YOLOBackend(LabelStudioMLBase):
                 
                 score = float(result.boxes.conf[i])  # 신뢰도 점수
                 
-                # if score < 0.985:
-                if score < 0.8:
+                if score < 0.985:
+                # if score < 0.8:
                     continue
 
                 task_predictions.append({
