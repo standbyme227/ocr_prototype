@@ -8,6 +8,7 @@ load_dotenv()
 # 환경 변수 설정
 LABEL_STUDIO_URL = os.getenv("LABEL_STUDIO_URL")  # Label Studio 서버 URL
 API_TOKEN = os.getenv("LABEL_STUDIO_API_TOKEN")
+TARGET_PROJECT_ID = os.getenv("TARGET_PROJECT_ID")
 
 headers = {
     "Authorization": f"Token {API_TOKEN}",
@@ -78,8 +79,7 @@ def configure_project(project_id):
         print(f"Webhook 조회 실패: {response.status_code} - {response.text}")
 
 def main():
-    project_id = 1  # 새로 생성된 프로젝트 ID
-    configure_project(project_id)
+    configure_project(TARGET_PROJECT_ID)
 
 if __name__ == "__main__":
     main()

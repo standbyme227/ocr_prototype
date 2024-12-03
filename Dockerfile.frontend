@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir streamlit
 WORKDIR /app
 
 # Copy frontend source code
-COPY frontend/ .
+COPY ocr_frontend/ .
 
 # Expose the Streamlit default port
 EXPOSE 8501

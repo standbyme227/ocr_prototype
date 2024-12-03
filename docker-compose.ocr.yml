@@ -11,7 +11,7 @@ services:
       - ./volumes/original:/volumes/original
       - ./volumes/preprocessed:/volumes/preprocessed
       - ./volumes/ocr_results:/volumes/ocr_results
-      - ./frontend:/app/frontend # 로컬 ./frontend 디렉토리를 컨테이너 /app/frontend로 마운트
+      - ./ocr_frontend:/app/frontend # 로컬 ./frontend 디렉토리를 컨테이너 /app/frontend로 마운트
 
   preprocessor:
     build:
@@ -23,7 +23,7 @@ services:
     volumes:
       - ./volumes/original:/volumes/original
       - ./volumes/preprocessed:/volumes/preprocessed
-      - ./preprocessor:/app/preprocessor # 로컬 ./preprocessor 디렉토리를 컨테이너 /app/preprocessor로 마운트
+      - ./ocr_preprocessor:/app/preprocessor # 로컬 ./preprocessor 디렉토리를 컨테이너 /app/preprocessor로 마운트
 
     tty: true
     stdin_open: true

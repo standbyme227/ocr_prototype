@@ -12,14 +12,14 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Install Python dependencies
-COPY preprocessor/requirements.txt /app/requirements.txt
+COPY ocr_preprocessor/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Set working directory
 WORKDIR /app
 
 # Copy preprocessor source code
-COPY preprocessor/ .
+COPY ocr_preprocessor/ .
 
 # Expose preprocessor API port (if needed)
 EXPOSE 5000
